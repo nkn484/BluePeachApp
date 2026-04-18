@@ -1,0 +1,22 @@
+# Gradle / Android build artifacts
+.gradle/
+.gradle-home/
+build/
+**/build/
+
+# IDE / local machine files
+.idea/
+*.iml
+local.properties
+
+# Temporary/reference folders created during development
+.reference/
+.tmp/
+
+# Crash/log dumps
+hs_err_pid*
+replay_pid*
+
+# OS files
+.DS_Store
+Thumbs.db
