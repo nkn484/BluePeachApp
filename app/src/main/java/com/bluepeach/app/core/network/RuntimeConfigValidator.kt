@@ -13,7 +13,7 @@ object RuntimeConfigValidator {
         if (!NetworkConfig.isSupabaseConfigured) {
             Log.w(
                 TAG,
-                "Missing Supabase config. Set BLUE_PEACH_SUPABASE_URL and BLUE_PEACH_SUPABASE_ANON_KEY."
+                "Missing Supabase config. Set BLUE_PEACH_SUPABASE_URL and BLUE_PEACH_SUPABASE_PUBLISHABLE_KEY."
             )
         }
 

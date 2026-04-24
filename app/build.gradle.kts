@@ -14,12 +14,25 @@ fun readConfig(key: String, default: String = ""): String {
     return fromLocal ?: fromEnv ?: default
 }
 
+fun readConfig(vararg keys: String, default: String = ""): String {
+    for (key in keys) {
+        val value = readConfig(key)
+        if (value.isNotBlank()) return value
+    }
+    return default
+}
+
 fun gradleString(value: String): String =
     "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
 val apiBaseUrl = readConfig("BLUE_PEACH_API_BASE_URL", "http://10.0.2.2:4000/api")
-val supabaseUrl = readConfig("BLUE_PEACH_SUPABASE_URL")
-val supabaseAnonKey = readConfig("BLUE_PEACH_SUPABASE_ANON_KEY")
+val supabaseUrl = readConfig("BLUE_PEACH_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL")
+val supabaseAnonKey = readConfig(
+    "BLUE_PEACH_SUPABASE_PUBLISHABLE_KEY",
+    "BLUE_PEACH_SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+)
 
 plugins {
     id("com.android.application")
@@ -105,6 +118,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt-android:2.6.0")
+    implementation("io.ktor:ktor-client-okhttp:2.3.12")
 
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
@@ -112,6 +127,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")

@@ -48,6 +48,8 @@ import com.bluepeach.app.core.ui.components.BluePeachTopBar
 @Composable
 fun ProductDetailScreen(
     onBack: () -> Unit,
+    requiresAuthForActions: Boolean,
+    onRequireLogin: () -> Unit,
     onOpenRingMeasurement: (String) -> Unit,
     viewModel: ProductDetailViewModel = viewModel()
 ) {
@@ -183,12 +185,20 @@ fun ProductDetailScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 BluePeachPrimaryButton(
                     text = "Thêm vào giỏ",
-                    onClick = {},
+                    onClick = {
+                        if (requiresAuthForActions) {
+                            onRequireLogin()
+                        }
+                    },
                     modifier = Modifier.weight(1f)
                 )
                 BluePeachSecondaryButton(
                     text = "Yêu thích",
-                    onClick = {},
+                    onClick = {
+                        if (requiresAuthForActions) {
+                            onRequireLogin()
+                        }
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }

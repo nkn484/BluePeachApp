@@ -5,6 +5,8 @@ import android.net.Uri
 object AppRoute {
     const val SPLASH = "splash"
     const val HOME = "home"
+    const val LOGIN = "login"
+    const val REGISTER = "register"
     const val PRODUCTS = "products"
     const val PRODUCT_ID_ARG = "productId"
     const val PRODUCT_DETAIL = "product-detail/{$PRODUCT_ID_ARG}"

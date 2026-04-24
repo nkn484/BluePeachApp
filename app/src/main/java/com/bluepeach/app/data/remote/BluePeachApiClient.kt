@@ -1,6 +1,7 @@
 package com.bluepeach.app.data.remote
 
 import com.bluepeach.app.BuildConfig
+import com.bluepeach.app.core.network.BluePeachAuthInterceptor
 import com.bluepeach.app.core.network.NetworkConfig
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -28,6 +29,7 @@ object BluePeachApiClient {
         }
 
         OkHttpClient.Builder()
+            .addInterceptor(BluePeachAuthInterceptor())
             .addInterceptor(logging)
             .build()
     }

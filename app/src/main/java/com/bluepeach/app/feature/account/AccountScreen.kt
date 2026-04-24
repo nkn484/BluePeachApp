@@ -1,6 +1,7 @@
 package com.bluepeach.app.feature.account
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,8 +16,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
-import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.VolunteerActivism
@@ -26,6 +27,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -33,12 +39,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bluepeach.app.core.ui.BluePeachColors
 import com.bluepeach.app.core.ui.components.BluePeachInfoBadge
+import com.bluepeach.app.core.ui.components.BluePeachPrimaryButton
+import com.bluepeach.app.core.ui.components.BluePeachSecondaryButton
 import com.bluepeach.app.core.ui.components.BluePeachSectionHeader
 import com.bluepeach.app.core.ui.components.BluePeachSupportRow
 import com.bluepeach.app.core.ui.components.BluePeachTopBar
+import com.bluepeach.app.data.auth.BluePeachAuthRepository
+import com.bluepeach.app.data.auth.SupabaseBluePeachAuthRepository
+import kotlinx.coroutines.launch
 
 @Composable
-fun AccountScreen(onBack: (() -> Unit)? = null) {
+fun AccountScreen(
+    onBack: (() -> Unit)? = null,
+    onOpenLogin: () -> Unit = {},
+    authRepository: BluePeachAuthRepository = SupabaseBluePeachAuthRepository
+) {
     val entries = listOf(
         AccountEntry("Hồ sơ", "Chỉnh sửa thông tin cá nhân", Icons.Rounded.Person),
         AccountEntry("Địa chỉ", "Quản lý địa chỉ nhận hàng", Icons.Rounded.LocationOn),
@@ -47,6 +62,9 @@ fun AccountScreen(onBack: (() -> Unit)? = null) {
         AccountEntry("Yêu thích", "Danh sách sản phẩm đã lưu", Icons.Rounded.VolunteerActivism),
         AccountEntry("Bảo mật", "Mật khẩu và bảo vệ tài khoản", Icons.Rounded.Lock)
     )
+    val coroutineScope = rememberCoroutineScope()
+    var authStateVersion by remember { mutableIntStateOf(0) }
+    val isSignedIn = remember(authStateVersion) { authRepository.isSignedIn() }
 
     Scaffold(
         topBar = { BluePeachTopBar(title = "Tài khoản", onBack = onBack) },
@@ -71,23 +89,46 @@ fun AccountScreen(onBack: (() -> Unit)? = null) {
             Surface(
                 shape = MaterialTheme.shapes.large,
                 color = BluePeachColors.surfaceWarm,
-                border = androidx.compose.foundation.BorderStroke(1.dp, BluePeachColors.borderSoft)
+                border = BorderStroke(1.dp, BluePeachColors.borderSoft)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Minh Anh Nguyen",
+                        text = if (isSignedIn) "Đã kết nối Supabase Auth" else "Chưa đăng nhập",
                         style = MaterialTheme.typography.titleLarge,
                         color = BluePeachColors.textPrimary
                     )
                     Text(
-                        text = "minhanh@bluepeach.example",
+                        text = if (isSignedIn) {
+                            "Session token hiện có thể được dùng cho các API private."
+                        } else {
+                            "Đăng nhập để đồng bộ wishlist, thông báo và hỗ trợ."
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = BluePeachColors.textSecondary
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        BluePeachInfoBadge("Thành viên từ 2026")
-                        BluePeachInfoBadge("Khách hàng")
+                        BluePeachInfoBadge("Supabase")
+                        BluePeachInfoBadge("Bearer token")
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                    if (isSignedIn) {
+                        BluePeachSecondaryButton(
+                            text = "Đăng xuất",
+                            onClick = {
+                                coroutineScope.launch {
+                                    authRepository.signOut()
+                                    authStateVersion += 1
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        BluePeachPrimaryButton(
+                            text = "Đăng nhập",
+                            onClick = onOpenLogin,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
@@ -95,7 +136,7 @@ fun AccountScreen(onBack: (() -> Unit)? = null) {
             Surface(
                 shape = MaterialTheme.shapes.large,
                 color = BluePeachColors.surfaceCard,
-                border = androidx.compose.foundation.BorderStroke(1.dp, BluePeachColors.borderSoft),
+                border = BorderStroke(1.dp, BluePeachColors.borderSoft),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -106,7 +147,7 @@ fun AccountScreen(onBack: (() -> Unit)? = null) {
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "Khu vực này sẽ kết nối với Supabase Auth ở bước tích hợp tài khoản.",
+                        text = "Khu vực này sẽ nối với Supabase Auth và dữ liệu hồ sơ người dùng ở bước tiếp theo.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = BluePeachColors.textSecondary
                     )
@@ -136,7 +177,7 @@ private fun AccountEntryRow(entry: AccountEntry) {
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = BluePeachColors.surfaceCard,
-        border = androidx.compose.foundation.BorderStroke(1.dp, BluePeachColors.borderSoft)
+        border = BorderStroke(1.dp, BluePeachColors.borderSoft)
     ) {
         Row(
             modifier = Modifier
