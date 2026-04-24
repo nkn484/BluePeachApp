@@ -27,12 +27,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.bluepeach.app.core.common.SampleStorefrontData
 import com.bluepeach.app.core.ui.BluePeachColors
 import com.bluepeach.app.core.ui.components.BluePeachEmptyState
+import com.bluepeach.app.core.ui.components.BluePeachErrorState
 import com.bluepeach.app.core.ui.components.BluePeachInfoBadge
 import com.bluepeach.app.core.ui.components.BluePeachInfoRow
+import com.bluepeach.app.core.ui.components.BluePeachLoadingPlaceholder
 import com.bluepeach.app.core.ui.components.BluePeachPriceBlock
 import com.bluepeach.app.core.ui.components.BluePeachPrimaryButton
 import com.bluepeach.app.core.ui.components.BluePeachProductCard
@@ -43,20 +47,50 @@ import com.bluepeach.app.core.ui.components.BluePeachTopBar
 
 @Composable
 fun ProductDetailScreen(
-    productId: String,
     onBack: () -> Unit,
-    onOpenRingMeasurement: (String) -> Unit
+    onOpenRingMeasurement: (String) -> Unit,
+    viewModel: ProductDetailViewModel = viewModel()
 ) {
-    val product = remember(productId) { SampleStorefrontData.productById(productId) }
+    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+    val product = uiState.product
+
+    if (uiState.isLoading) {
+        Scaffold(
+            topBar = { BluePeachTopBar(title = "Chi tiết sản phẩm", onBack = onBack) },
+            containerColor = BluePeachColors.surfacePlain
+        ) { innerPadding ->
+            BluePeachLoadingPlaceholder(
+                title = "Đang tải chi tiết sản phẩm...",
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
+        return
+    }
+
+    if (uiState.errorMessage != null) {
+        Scaffold(
+            topBar = { BluePeachTopBar(title = "Chi tiết sản phẩm", onBack = onBack) },
+            containerColor = BluePeachColors.surfacePlain
+        ) { innerPadding ->
+            BluePeachErrorState(
+                title = "Không tải được sản phẩm",
+                message = uiState.errorMessage,
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(16.dp)
+            )
+        }
+        return
+    }
 
     if (product == null) {
         Scaffold(
-            topBar = { BluePeachTopBar(title = "Product detail", onBack = onBack) },
+            topBar = { BluePeachTopBar(title = "Chi tiết sản phẩm", onBack = onBack) },
             containerColor = BluePeachColors.surfacePlain
         ) { innerPadding ->
             BluePeachEmptyState(
-                title = "Product not found",
-                message = "This placeholder item is unavailable in local sample data.",
+                title = "Không tìm thấy sản phẩm",
+                message = "Sản phẩm này chưa có trong dữ liệu mẫu.",
                 modifier = Modifier
                     .padding(innerPadding)
                     .padding(16.dp)
@@ -67,12 +101,11 @@ fun ProductDetailScreen(
 
     var selectedImageIndex by remember(product.id) { mutableIntStateOf(0) }
     val gallery = remember(product.id) {
-        if (product.galleryImageUrls.isEmpty()) listOf(product.primaryImageUrl)
-        else product.galleryImageUrls
+        if (product.galleryImageUrls.isEmpty()) listOf(product.primaryImageUrl) else product.galleryImageUrls
     }
 
     Scaffold(
-        topBar = { BluePeachTopBar(title = "Product detail", onBack = onBack) },
+        topBar = { BluePeachTopBar(title = "Chi tiết sản phẩm", onBack = onBack) },
         containerColor = BluePeachColors.surfacePlain
     ) { innerPadding ->
         Column(
@@ -84,7 +117,7 @@ fun ProductDetailScreen(
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 item { BluePeachTagBadge(text = "Blue Peach") }
                 item { BluePeachInfoBadge(text = "SKU ${product.sku}") }
-                item { BluePeachInfoBadge(text = if (product.stockQuantity > 0) "In stock" else "Out of stock") }
+                item { BluePeachInfoBadge(text = if (product.stockQuantity > 0) "Còn hàng" else "Hết hàng") }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -149,12 +182,12 @@ fun ProductDetailScreen(
             Spacer(modifier = Modifier.height(14.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 BluePeachPrimaryButton(
-                    text = "Add to cart",
+                    text = "Thêm vào giỏ",
                     onClick = {},
                     modifier = Modifier.weight(1f)
                 )
                 BluePeachSecondaryButton(
-                    text = "Wishlist",
+                    text = "Yêu thích",
                     onClick = {},
                     modifier = Modifier.weight(1f)
                 )
@@ -171,18 +204,18 @@ fun ProductDetailScreen(
                         .padding(14.dp)
                 ) {
                     Text(
-                        text = "Ring measurement",
+                        text = "Đo ni nhẫn",
                         style = MaterialTheme.typography.titleMedium,
                         color = BluePeachColors.textPrimary
                     )
                     Text(
-                        text = "This placement is reserved for future HandMeasure integration.",
+                        text = "Khu vực này được giữ sẵn để tích hợp HandMeasure trong bước sau.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = BluePeachColors.textSecondary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     BluePeachSecondaryButton(
-                        text = "Measure ring size (placeholder)",
+                        text = "Đo size nhẫn (placeholder)",
                         onClick = { onOpenRingMeasurement(product.id) }
                     )
                 }
@@ -199,7 +232,7 @@ fun ProductDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    text = "Product details",
+                    text = "Thông tin sản phẩm",
                     style = MaterialTheme.typography.titleMedium,
                     color = BluePeachColors.textPrimary
                 )
@@ -208,42 +241,53 @@ fun ProductDetailScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = BluePeachColors.textSecondary
                 )
-                BluePeachInfoRow("Stock", "${product.stockQuantity} items")
-                BluePeachInfoRow("Material", "925 silver")
-                BluePeachInfoRow("Packaging", "Gift-ready box")
+                BluePeachInfoRow("Tồn kho", "${product.stockQuantity} sản phẩm")
+                BluePeachInfoRow("Chất liệu", "Bạc 925")
+                BluePeachInfoRow("Đóng gói", "Hộp quà tặng")
             }
 
             Spacer(modifier = Modifier.height(14.dp))
             Text(
-                text = "Related products",
+                text = "Sản phẩm liên quan",
                 style = MaterialTheme.typography.titleLarge,
                 color = BluePeachColors.textPrimary
             )
             Spacer(modifier = Modifier.height(8.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(
-                    SampleStorefrontData.products.filter { it.id != product.id }.take(4),
-                    key = { it.id }
-                ) { related ->
-                    BluePeachProductCard(
-                        product = related,
-                        onClick = {},
-                        modifier = Modifier.fillParentMaxWidth(0.58f),
-                        showWishlistIcon = false
-                    )
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SampleStorefrontData.products
+                    .filter { it.id != product.id }
+                    .take(4)
+                    .chunked(2)
+                    .forEach { rowProducts ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            rowProducts.forEach { related ->
+                                BluePeachProductCard(
+                                    product = related,
+                                    onClick = {},
+                                    modifier = Modifier.weight(1f),
+                                    showWishlistIcon = false
+                                )
+                            }
+                            if (rowProducts.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
             Text(
-                text = "Reviews",
+                text = "Đánh giá",
                 style = MaterialTheme.typography.titleLarge,
                 color = BluePeachColors.textPrimary
             )
             Spacer(modifier = Modifier.height(8.dp))
             SampleStorefrontData.featuredReviews
                 .filter { it.productId == product.id || it.rating >= 4 }
-                .take(2)
+                .take(3)
                 .forEach { review ->
                     Column(
                         modifier = Modifier
@@ -255,7 +299,7 @@ fun ProductDetailScreen(
                             .padding(14.dp)
                     ) {
                         Text(
-                            text = "${review.customerName} | * ${review.rating}",
+                            text = "${review.customerName} | ${review.rating} sao",
                             style = MaterialTheme.typography.labelLarge,
                             color = BluePeachColors.textPrimary
                         )

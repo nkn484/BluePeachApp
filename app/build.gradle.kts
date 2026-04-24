@@ -1,6 +1,30 @@
+import java.io.FileInputStream
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localFile = rootProject.file("local.properties")
+    if (localFile.exists()) {
+        FileInputStream(localFile).use(::load)
+    }
+}
+
+fun readConfig(key: String, default: String = ""): String {
+    val fromLocal = localProperties.getProperty(key)?.takeIf { it.isNotBlank() }
+    val fromEnv = System.getenv(key)?.takeIf { it.isNotBlank() }
+    return fromLocal ?: fromEnv ?: default
+}
+
+fun gradleString(value: String): String =
+    "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+val apiBaseUrl = readConfig("BLUE_PEACH_API_BASE_URL", "http://10.0.2.2:4000/api")
+val supabaseUrl = readConfig("BLUE_PEACH_SUPABASE_URL")
+val supabaseAnonKey = readConfig("BLUE_PEACH_SUPABASE_ANON_KEY")
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -13,6 +37,9 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("String", "API_BASE_URL", gradleString(apiBaseUrl))
+        buildConfigField("String", "SUPABASE_URL", gradleString(supabaseUrl))
+        buildConfigField("String", "SUPABASE_ANON_KEY", gradleString(supabaseAnonKey))
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -41,6 +68,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -74,7 +102,14 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.3")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

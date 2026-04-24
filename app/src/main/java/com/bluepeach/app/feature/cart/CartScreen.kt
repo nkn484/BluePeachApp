@@ -41,7 +41,7 @@ import com.bluepeach.app.core.ui.components.BluePeachTopBar
 import com.bluepeach.app.data.model.CartLine
 
 @Composable
-fun CartScreen(onBack: () -> Unit) {
+fun CartScreen(onBack: (() -> Unit)? = null) {
     val cartLines = remember {
         mutableStateListOf<CartLine>().also { it.addAll(SampleStorefrontData.initialCart) }
     }
@@ -52,13 +52,13 @@ fun CartScreen(onBack: () -> Unit) {
     val total = subtotal + vat + shipping
 
     Scaffold(
-        topBar = { BluePeachTopBar(title = "Cart", onBack = onBack) },
+        topBar = { BluePeachTopBar(title = "Giỏ hàng", onBack = onBack) },
         containerColor = BluePeachColors.surfacePlain
     ) { innerPadding ->
         if (cartLines.isEmpty()) {
             BluePeachEmptyState(
-                title = "Your cart is empty",
-                message = "Add products from the storefront to start checkout.",
+                title = "Giỏ hàng đang trống",
+                message = "Hãy thêm sản phẩm để bắt đầu quy trình thanh toán.",
                 modifier = Modifier
                     .padding(innerPadding)
                     .padding(16.dp)
@@ -119,7 +119,7 @@ fun CartScreen(onBack: () -> Unit) {
                                             }
                                         }
                                     ) {
-                                        Icon(Icons.Rounded.Remove, contentDescription = "Decrease")
+                                        Icon(Icons.Rounded.Remove, contentDescription = "Giảm số lượng")
                                     }
                                     Text(
                                         text = "${line.quantity}",
@@ -134,7 +134,7 @@ fun CartScreen(onBack: () -> Unit) {
                                             }
                                         }
                                     ) {
-                                        Icon(Icons.Rounded.Add, contentDescription = "Increase")
+                                        Icon(Icons.Rounded.Add, contentDescription = "Tăng số lượng")
                                     }
                                 }
                             }
@@ -143,7 +143,7 @@ fun CartScreen(onBack: () -> Unit) {
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.DeleteOutline,
-                                    contentDescription = "Remove",
+                                    contentDescription = "Xóa sản phẩm",
                                     tint = BluePeachColors.danger
                                 )
                             }
@@ -162,25 +162,25 @@ fun CartScreen(onBack: () -> Unit) {
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Order summary",
+                        text = "Tóm tắt đơn hàng",
                         style = MaterialTheme.typography.titleLarge,
                         color = BluePeachColors.textPrimary
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    BluePeachInfoRow("Subtotal", formatVnd(subtotal))
+                    BluePeachInfoRow("Tạm tính", formatVnd(subtotal))
                     BluePeachInfoRow("VAT (10%)", formatVnd(vat))
-                    BluePeachInfoRow("Shipping", formatVnd(shipping))
-                    BluePeachInfoRow("Total", formatVnd(total))
+                    BluePeachInfoRow("Phí vận chuyển", formatVnd(shipping))
+                    BluePeachInfoRow("Tổng cộng", formatVnd(total))
                     Spacer(modifier = Modifier.height(12.dp))
                     BluePeachPrimaryButton(
-                        text = "Proceed to checkout",
+                        text = "Tiến hành thanh toán",
                         onClick = {},
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     BluePeachSecondaryButton(
-                        text = "Continue shopping",
-                        onClick = onBack,
+                        text = "Tiếp tục mua sắm",
+                        onClick = { onBack?.invoke() },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -194,4 +194,3 @@ private fun formatVnd(value: Int): String = value.toString()
     .chunked(3)
     .joinToString(".")
     .reversed() + " VND"
-

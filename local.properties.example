@@ -1,0 +1,13 @@
+# Copy this file to `local.properties` (do not commit local.properties).
+# Keep your existing `sdk.dir` line in local.properties.
+
+# Shared backend base URL used by web `NEXT_PUBLIC_API_URL`
+# Emulator: use 10.0.2.2 to reach host machine localhost.
+BLUE_PEACH_API_BASE_URL=http://10.0.2.2:4000/api
+
+# Shared Supabase project URL (same value as web/backend SUPABASE_URL)
+BLUE_PEACH_SUPABASE_URL=https://your-project.supabase.co
+
+# Public anon key for client apps (same as web NEXT_PUBLIC_SUPABASE_ANON_KEY)
+# Never use SUPABASE_SERVICE_ROLE_KEY in Android app.
+BLUE_PEACH_SUPABASE_ANON_KEY=your-supabase-anon-key

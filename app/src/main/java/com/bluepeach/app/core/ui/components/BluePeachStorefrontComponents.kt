@@ -32,11 +32,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.bluepeach.app.core.ui.BluePeachColors
@@ -48,9 +50,16 @@ fun BluePeachSectionHeader(
     label: String,
     title: String,
     description: String,
+    centered: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+    val alignment = if (centered) Alignment.CenterHorizontally else Alignment.Start
+    val textAlign = if (centered) TextAlign.Center else TextAlign.Start
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = alignment
+    ) {
         Text(
             text = label.uppercase(),
             style = MaterialTheme.typography.labelMedium,
@@ -59,16 +68,16 @@ fun BluePeachSectionHeader(
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = title,
-            style = MaterialTheme.typography.headlineLarge,
+            style = MaterialTheme.typography.headlineMedium,
             color = BluePeachColors.textPrimary,
-            textAlign = TextAlign.Center
+            textAlign = textAlign
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
             color = BluePeachColors.textSecondary,
-            textAlign = TextAlign.Center
+            textAlign = textAlign
         )
     }
 }
@@ -120,22 +129,51 @@ fun BluePeachPromoBanner(
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.displayMedium,
+                    style = MaterialTheme.typography.headlineLarge,
                     color = Color.White
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFFEDEDED)
+                    color = Color(0xFFF1F1F1)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    BluePeachPrimaryButton(text = primaryCtaText, onClick = onPrimaryClick)
-                    BluePeachSecondaryButton(text = secondaryCtaText, onClick = onSecondaryClick)
+                    HeroActionButton(
+                        text = primaryCtaText,
+                        onClick = onPrimaryClick,
+                        solid = true
+                    )
+                    HeroActionButton(
+                        text = secondaryCtaText,
+                        onClick = onSecondaryClick,
+                        solid = false
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HeroActionButton(
+    text: String,
+    onClick: () -> Unit,
+    solid: Boolean
+) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.small,
+        color = if (solid) Color(0xD91B1D20) else Color.Transparent,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.86f))
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 11.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = Color.White
+        )
     }
 }
 
@@ -190,8 +228,16 @@ fun BluePeachProductCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .background(BluePeachColors.surfaceWarm),
-                contentScale = ContentScale.Crop
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFFCFBF8),
+                                Color(0xFFF2ECE3)
+                            )
+                        )
+                    )
+                    .padding(18.dp),
+                contentScale = ContentScale.Fit
             )
             if (showWishlistIcon) {
                 IconButton(
@@ -205,15 +251,15 @@ fun BluePeachProductCard(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.FavoriteBorder,
-                        contentDescription = "Wishlist",
+                        contentDescription = "Yêu thích",
                         tint = BluePeachColors.textPrimary
                     )
                 }
             }
             val badgeText = when {
                 product.discountPercent != null -> "-${product.discountPercent}%"
-                product.isBestSeller -> "Best seller"
-                product.isNewArrival -> "New"
+                product.isBestSeller -> "Bán chạy"
+                product.isNewArrival -> "Mới"
                 else -> null
             }
             if (badgeText != null) {
@@ -258,21 +304,24 @@ fun BluePeachPriceBlock(
     modifier: Modifier = Modifier
 ) {
     val primaryText = formatVnd(priceCents)
-    Row(
+    Column(
         modifier = modifier,
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Text(
             text = primaryText,
             style = MaterialTheme.typography.titleMedium,
-            color = BluePeachColors.textPrimary
+            color = BluePeachColors.textPrimary,
+            maxLines = 1
         )
         if (originalPriceCents != null && originalPriceCents > priceCents) {
             Text(
                 text = formatVnd(originalPriceCents),
-                style = MaterialTheme.typography.bodyMedium,
-                color = BluePeachColors.textTertiary
+                style = MaterialTheme.typography.labelLarge,
+                color = BluePeachColors.textTertiary,
+                textDecoration = TextDecoration.LineThrough,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -307,12 +356,12 @@ fun BluePeachRatingSummary(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "Rating %.1f".format(rating),
+            text = "%.1f sao".format(rating),
             style = MaterialTheme.typography.labelLarge,
             color = BluePeachColors.textPrimary
         )
         Text(
-            text = "$reviewCount reviews",
+            text = "$reviewCount đánh giá",
             style = MaterialTheme.typography.bodyMedium,
             color = BluePeachColors.textSecondary
         )
@@ -447,7 +496,7 @@ fun BluePeachErrorState(
 
 @Composable
 fun BluePeachLoadingPlaceholder(
-    title: String = "Loading storefront...",
+    title: String = "Đang tải storefront...",
     modifier: Modifier = Modifier
 ) {
     Row(

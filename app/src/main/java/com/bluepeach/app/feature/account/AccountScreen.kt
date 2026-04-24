@@ -10,14 +10,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.ReceiptLong
-import androidx.compose.material.icons.rounded.SupportAgent
 import androidx.compose.material.icons.rounded.VolunteerActivism
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,18 +38,18 @@ import com.bluepeach.app.core.ui.components.BluePeachSupportRow
 import com.bluepeach.app.core.ui.components.BluePeachTopBar
 
 @Composable
-fun AccountScreen(onBack: () -> Unit) {
+fun AccountScreen(onBack: (() -> Unit)? = null) {
     val entries = listOf(
-        AccountEntry("Profile", "Edit your personal profile details", Icons.Rounded.Person),
-        AccountEntry("Addresses", "Manage shipping addresses", Icons.Rounded.LocationOn),
-        AccountEntry("Orders", "Track and review your order history", Icons.Rounded.ReceiptLong),
-        AccountEntry("Notifications", "Shop updates and delivery alerts", Icons.Rounded.Notifications),
-        AccountEntry("Wishlist", "Saved favorites and gift ideas", Icons.Rounded.VolunteerActivism),
-        AccountEntry("Security", "Password and account protection", Icons.Rounded.Lock)
+        AccountEntry("Hồ sơ", "Chỉnh sửa thông tin cá nhân", Icons.Rounded.Person),
+        AccountEntry("Địa chỉ", "Quản lý địa chỉ nhận hàng", Icons.Rounded.LocationOn),
+        AccountEntry("Đơn hàng", "Theo dõi lịch sử mua hàng", Icons.AutoMirrored.Rounded.ReceiptLong),
+        AccountEntry("Thông báo", "Cập nhật đơn hàng và ưu đãi", Icons.Rounded.Notifications),
+        AccountEntry("Yêu thích", "Danh sách sản phẩm đã lưu", Icons.Rounded.VolunteerActivism),
+        AccountEntry("Bảo mật", "Mật khẩu và bảo vệ tài khoản", Icons.Rounded.Lock)
     )
 
     Scaffold(
-        topBar = { BluePeachTopBar(title = "Account", onBack = onBack) },
+        topBar = { BluePeachTopBar(title = "Tài khoản", onBack = onBack) },
         containerColor = BluePeachColors.surfacePlain
     ) { innerPadding ->
         Column(
@@ -56,13 +57,15 @@ fun AccountScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .fillMaxSize()
                 .background(BluePeachColors.surfacePlain)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             BluePeachSectionHeader(
-                label = "Blue Peach account",
-                title = "Customer profile center",
-                description = "Shopper-focused account area aligned with web profile, addresses, orders, and security."
+                label = "Blue Peach",
+                title = "Không gian tài khoản",
+                description = "Hồ sơ, địa chỉ, đơn hàng, yêu thích, thông báo và bảo mật.",
+                centered = false
             )
 
             Surface(
@@ -81,10 +84,10 @@ fun AccountScreen(onBack: () -> Unit) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = BluePeachColors.textSecondary
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        BluePeachInfoBadge("Member since 2026")
-                        BluePeachInfoBadge("Customer")
+                        BluePeachInfoBadge("Thành viên từ 2026")
+                        BluePeachInfoBadge("Khách hàng")
                     }
                 }
             }
@@ -97,13 +100,13 @@ fun AccountScreen(onBack: () -> Unit) {
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Account overview",
+                        text = "Tổng quan tài khoản",
                         style = MaterialTheme.typography.titleMedium,
                         color = BluePeachColors.textPrimary,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "Profile, addresses, orders, wishlist, notifications, and security.",
+                        text = "Khu vực này sẽ kết nối với Supabase Auth ở bước tích hợp tài khoản.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = BluePeachColors.textSecondary
                     )
@@ -115,8 +118,8 @@ fun AccountScreen(onBack: () -> Unit) {
             }
 
             BluePeachSupportRow(
-                title = "Need help with your order?",
-                subtitle = "Contact support for delivery, product, or account assistance."
+                title = "Cần hỗ trợ đơn hàng?",
+                subtitle = "Liên hệ Blue Peach để được hỗ trợ giao hàng, sản phẩm hoặc tài khoản."
             )
         }
     }
@@ -146,7 +149,7 @@ private fun AccountEntryRow(entry: AccountEntry) {
                 contentDescription = null,
                 tint = BluePeachColors.textPrimary
             )
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = entry.title,
@@ -160,7 +163,7 @@ private fun AccountEntryRow(entry: AccountEntry) {
                 )
             }
             Icon(
-                imageVector = Icons.Rounded.KeyboardArrowRight,
+                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                 contentDescription = null,
                 tint = BluePeachColors.textSecondary
             )

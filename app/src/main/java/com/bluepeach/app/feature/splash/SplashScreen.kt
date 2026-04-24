@@ -1,5 +1,6 @@
 package com.bluepeach.app.feature.splash
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,10 @@ import kotlinx.coroutines.delay
 fun SplashScreen(onSplashCompleted: () -> Unit) {
     LaunchedEffect(Unit) {
         delay(1100)
-        onSplashCompleted()
+        runCatching { onSplashCompleted() }
+            .onFailure { throwable ->
+                Log.e("BluePeachSplash", "Failed to complete splash transition", throwable)
+            }
     }
 
     Column(
@@ -33,7 +37,7 @@ fun SplashScreen(onSplashCompleted: () -> Unit) {
             color = BluePeachColors.textPrimary
         )
         Text(
-            text = "Refined silver storefront",
+            text = "Trang sức bạc tinh tế",
             style = MaterialTheme.typography.bodyMedium,
             color = BluePeachColors.textSecondary
         )

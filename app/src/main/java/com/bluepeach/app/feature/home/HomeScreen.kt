@@ -2,7 +2,6 @@ package com.bluepeach.app.feature.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,18 +9,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.dp
 import com.bluepeach.app.core.common.SampleStorefrontData
 import com.bluepeach.app.core.ui.BluePeachColors
 import com.bluepeach.app.core.ui.components.BluePeachCategoryTile
+import com.bluepeach.app.core.ui.components.BluePeachErrorState
 import com.bluepeach.app.core.ui.components.BluePeachInfoBadge
+import com.bluepeach.app.core.ui.components.BluePeachLoadingPlaceholder
 import com.bluepeach.app.core.ui.components.BluePeachProductCard
 import com.bluepeach.app.core.ui.components.BluePeachPromoBanner
 import com.bluepeach.app.core.ui.components.BluePeachSectionHeader
@@ -34,17 +37,12 @@ import com.bluepeach.app.data.model.Product
 fun HomeScreen(
     onOpenProducts: () -> Unit,
     onOpenProduct: (String) -> Unit,
-    onOpenCart: () -> Unit,
-    onOpenAccount: () -> Unit
+    viewModel: HomeViewModel = viewModel()
 ) {
+    val state = viewModel.uiState.collectAsStateWithLifecycle().value.withSampleFallback()
+
     Scaffold(
-        topBar = {
-            BluePeachTopBar(
-                title = "BLUE PEACH",
-                onCart = onOpenCart,
-                onAccount = onOpenAccount
-            )
-        },
+        topBar = { BluePeachTopBar(title = "Trang chủ") },
         containerColor = BluePeachColors.surfacePlain
     ) { innerPadding ->
         LazyColumn(
@@ -52,14 +50,33 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .background(BluePeachColors.surfacePlain)
         ) {
+            if (state.isLoading) {
+                item {
+                    BluePeachLoadingPlaceholder(
+                        title = "Đang tải storefront...",
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            state.errorMessage?.let { message ->
+                item {
+                    BluePeachErrorState(
+                        title = "Chưa kết nối được backend",
+                        message = message,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+
             item {
                 SectionSurface(warm = false) {
                     BluePeachPromoBanner(
-                        title = SampleStorefrontData.homeHeroTitle,
-                        description = SampleStorefrontData.homeHeroDescription,
-                        imageUrl = SampleStorefrontData.homeHeroImageUrl,
-                        primaryCtaText = "Shop now",
-                        secondaryCtaText = "View ring",
+                        title = state.banner?.title ?: SampleStorefrontData.homeHeroTitle,
+                        description = state.banner?.description ?: SampleStorefrontData.homeHeroDescription,
+                        imageUrl = state.banner?.imageUrl ?: SampleStorefrontData.homeHeroImageUrl,
+                        primaryCtaText = state.banner?.ctaText ?: "Mua ngay",
+                        secondaryCtaText = "Xem nhẫn",
                         onPrimaryClick = onOpenProducts,
                         onSecondaryClick = { onOpenProduct(SampleStorefrontData.featuredRingId) },
                         modifier = Modifier.fillMaxWidth()
@@ -72,7 +89,8 @@ fun HomeScreen(
                     BluePeachSectionHeader(
                         label = "Blue Peach",
                         title = SampleStorefrontData.introTitle,
-                        description = SampleStorefrontData.introDescription
+                        description = SampleStorefrontData.introDescription,
+                        centered = false
                     )
                 }
             }
@@ -80,35 +98,26 @@ fun HomeScreen(
             item {
                 SectionSurface(warm = false) {
                     BluePeachSectionHeader(
-                        label = "Categories",
-                        title = "Shop by category",
-                        description = "Explore curated jewelry groups inspired by the web storefront."
+                        label = "Danh mục",
+                        title = "Mua theo danh mục",
+                        description = "Các nhóm trang sức được sắp xếp lại cho thao tác trên màn hình nhỏ.",
+                        centered = false
                     )
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SampleStorefrontData.categories.chunked(2).forEach { rowItems ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                rowItems.forEach { category ->
-                                    BluePeachCategoryTile(
-                                        category = category,
-                                        onClick = onOpenProducts,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                                if (rowItems.size == 1) Spacer(modifier = Modifier.weight(1f))
-                            }
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CategoryGrid(
+                        categories = state.categories,
+                        onOpenProducts = onOpenProducts
+                    )
                 }
             }
 
             item {
-                ProductSection(
+                ProductGridSection(
                     warm = true,
-                    label = "New arrivals",
-                    title = "Fresh designs for everyday elegance",
-                    description = "Latest products with minimalist and feminine styling.",
-                    products = SampleStorefrontData.newArrivals,
+                    label = "Hàng mới",
+                    title = "Thiết kế mới cho vẻ đẹp mỗi ngày",
+                    description = "Các mẫu mới theo tinh thần tối giản, nữ tính và dễ phối đồ.",
+                    products = state.newArrivals,
                     onOpenProduct = onOpenProduct
                 )
             }
@@ -117,16 +126,17 @@ fun HomeScreen(
                 SectionSurface(warm = false) {
                     BluePeachSectionHeader(
                         label = "Editorial",
-                        title = "A calmer way to wear silver",
-                        description = "A brand storytelling block translated from web editorial composition."
+                        title = "Everyday shine, refined.",
+                        description = "Khối nội dung thương hiệu được rút gọn từ web cho nhịp cuộn mobile.",
+                        centered = false
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     BluePeachPromoBanner(
-                        title = "Everyday shine, refined.",
-                        description = "Pieces designed to pair naturally with modern wardrobe essentials.",
+                        title = "Một cách nhẹ nhàng hơn để đeo bạc",
+                        description = "Những thiết kế tinh gọn, dễ hòa vào tủ đồ hằng ngày.",
                         imageUrl = "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=1200&q=80",
-                        primaryCtaText = "View edit",
-                        secondaryCtaText = "Browse products",
+                        primaryCtaText = "Xem bộ chọn",
+                        secondaryCtaText = "Xem sản phẩm",
                         onPrimaryClick = onOpenProducts,
                         onSecondaryClick = onOpenProducts
                     )
@@ -134,12 +144,12 @@ fun HomeScreen(
             }
 
             item {
-                ProductSection(
+                ProductGridSection(
                     warm = true,
-                    label = "Best sellers",
-                    title = "Most loved by Blue Peach shoppers",
-                    description = "Top picks with strong customer preference and social proof.",
-                    products = SampleStorefrontData.bestSellers,
+                    label = "Bán chạy",
+                    title = "Được khách hàng Blue Peach yêu thích",
+                    description = "Các sản phẩm nổi bật được đặt trong lưới hai cột cân đối.",
+                    products = state.bestSellers,
                     onOpenProduct = onOpenProduct
                 )
             }
@@ -147,18 +157,22 @@ fun HomeScreen(
             item {
                 SectionSurface(warm = false) {
                     BluePeachSectionHeader(
-                        label = "Featured reviews",
-                        title = "What customers say",
-                        description = "Social proof preview inspired by the web storefront review cards."
+                        label = "Đánh giá nổi bật",
+                        title = "Khách hàng nói gì",
+                        description = "Các đánh giá được xếp dọc để đọc rõ trên màn hình nhỏ.",
+                        centered = false
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(SampleStorefrontData.featuredReviews, key = { it.id }) { review ->
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        state.featuredReviews.forEach { review ->
                             Column(
                                 modifier = Modifier
-                                    .fillParentMaxWidth(0.86f)
-                                    .background(BluePeachColors.surfaceCard, MaterialTheme.shapes.medium)
-                                    .padding(16.dp)
+                                    .fillMaxWidth()
+                                    .background(
+                                        color = BluePeachColors.surfaceCard,
+                                        shape = RoundedCornerShape(18.dp)
+                                    )
+                                    .padding(14.dp)
                             ) {
                                 Text(
                                     text = review.productName,
@@ -167,7 +181,7 @@ fun HomeScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Rating ${review.rating} | ${review.customerName}",
+                                    text = "${review.rating} sao | ${review.customerName}",
                                     style = MaterialTheme.typography.labelLarge,
                                     color = BluePeachColors.textSecondary
                                 )
@@ -186,14 +200,22 @@ fun HomeScreen(
             item {
                 SectionSurface(warm = false) {
                     BluePeachSectionHeader(
-                        label = "Why Blue Peach",
-                        title = "Refined design, thoughtful experience",
-                        description = "Trust-focused section translated into native Android badges."
+                        label = "Vì sao chọn Blue Peach",
+                        title = "Thiết kế tinh tế, trải nghiệm chỉn chu",
+                        description = "Các điểm tin cậy chính được giữ nhất quán với storefront web.",
+                        centered = false
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(SampleStorefrontData.trustPoints) { point ->
-                            BluePeachTrustBadge(text = point)
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SampleStorefrontData.trustPoints.chunked(2).forEach { rowItems ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                rowItems.forEach { point ->
+                                    BluePeachTrustBadge(text = point, modifier = Modifier.weight(1f))
+                                }
+                                if (rowItems.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
                 }
@@ -202,21 +224,22 @@ fun HomeScreen(
             item {
                 SectionSurface(warm = true) {
                     Text(
-                        text = "Need help choosing a gift?",
+                        text = "Cần tư vấn chọn quà?",
                         style = MaterialTheme.typography.titleLarge,
                         color = BluePeachColors.textPrimary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     BluePeachSupportRow(
-                        title = "Customer support",
-                        subtitle = "Get styling and order support from the Blue Peach team."
+                        title = "Hỗ trợ khách hàng",
+                        subtitle = "Tư vấn kiểu dáng, kích thước và tình trạng đơn hàng."
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        item { BluePeachInfoBadge("Gift-ready packaging") }
-                        item { BluePeachInfoBadge("Secure shopping") }
-                        item { BluePeachInfoBadge("Easy returns") }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        BluePeachInfoBadge("Sẵn sàng làm quà", modifier = Modifier.weight(1f))
+                        BluePeachInfoBadge("Mua sắm an toàn", modifier = Modifier.weight(1f))
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    BluePeachInfoBadge("Đổi trả dễ dàng", modifier = Modifier.fillMaxWidth())
                 }
             }
         }
@@ -224,7 +247,30 @@ fun HomeScreen(
 }
 
 @Composable
-private fun ProductSection(
+private fun CategoryGrid(
+    categories: List<com.bluepeach.app.data.model.Category>,
+    onOpenProducts: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        categories.chunked(2).forEach { rowItems ->
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                rowItems.forEach { category ->
+                    BluePeachCategoryTile(
+                        category = category,
+                        onClick = onOpenProducts,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (rowItems.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProductGridSection(
     warm: Boolean,
     label: String,
     title: String,
@@ -236,16 +282,27 @@ private fun ProductSection(
         BluePeachSectionHeader(
             label = label,
             title = title,
-            description = description
+            description = description,
+            centered = false
         )
         Spacer(modifier = Modifier.height(16.dp))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(products, key = { it.id }) { product ->
-                BluePeachProductCard(
-                    product = product,
-                    onClick = { onOpenProduct(product.id) },
-                    modifier = Modifier.fillParentMaxWidth(0.56f)
-                )
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            products.take(4).chunked(2).forEach { rowItems ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    rowItems.forEach { product ->
+                        BluePeachProductCard(
+                            product = product,
+                            onClick = { onOpenProduct(product.id) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    if (rowItems.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
             }
         }
     }
@@ -256,11 +313,12 @@ private fun SectionSurface(
     warm: Boolean,
     content: @Composable () -> Unit
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clipToBounds()
             .background(if (warm) BluePeachColors.surfaceWarm else BluePeachColors.surfacePlain)
-            .padding(horizontal = 16.dp, vertical = 24.dp)
+            .padding(horizontal = 16.dp, vertical = 20.dp)
     ) {
         content()
     }

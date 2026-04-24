@@ -24,14 +24,16 @@ val BluePeachTypography = Typography(
     headlineLarge = TextStyle(
         fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.Medium,
-        fontSize = 34.sp,
-        lineHeight = 38.sp
+        fontSize = 32.sp,
+        lineHeight = 46.sp,
+        letterSpacing = (-0.2).sp
     ),
     headlineMedium = TextStyle(
         fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.Medium,
-        fontSize = 30.sp,
-        lineHeight = 34.sp
+        fontSize = 28.sp,
+        lineHeight = 40.sp,
+        letterSpacing = (-0.1).sp
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
